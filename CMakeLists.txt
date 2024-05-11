@@ -35,8 +35,13 @@ find_package(glfw3 REQUIRED)
 # find_package(realsense2)
 
 set(ORB_SLAM3_SOURCE_DIR "${PROJECT_SOURCE_DIR}/ORB-SLAM3")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib/${CMAKE_BUILD_TYPE})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
+else()
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+endif()
 
 include_directories(
     ${PROJECT_SOURCE_DIR}
@@ -219,34 +224,34 @@ target_link_libraries(usb_cam
     gaussian_mapper
     ${ORB_SLAM3_SOURCE_DIR}/lib/libORB_SLAM3.so)
 
-# TUM RGBD
-# 以这个为例子，运行tum的rgbd数据，同时链接了下面几个库：
-# 1、tum_rgbd、gaussian_viewer（这是可视化3dgs的）、gaussian_mapper（这应该是运行3dgs mapping的）、libORB_SLAM3.so（这是运行orbslam3的）
-add_executable(tum_rgbd examples/tum_rgbd.cpp)
-target_link_libraries(tum_rgbd
-    gaussian_viewer    
-    gaussian_mapper
-    ${ORB_SLAM3_SOURCE_DIR}/lib/libORB_SLAM3.so)
+# # TUM RGBD
+# # 以这个为例子，运行tum的rgbd数据，同时链接了下面几个库：
+# # 1、tum_rgbd、gaussian_viewer（这是可视化3dgs的）、gaussian_mapper（这应该是运行3dgs mapping的）、libORB_SLAM3.so（这是运行orbslam3的）
+# add_executable(tum_rgbd examples/tum_rgbd.cpp)
+# target_link_libraries(tum_rgbd
+#     gaussian_viewer    
+#     gaussian_mapper
+#     ${ORB_SLAM3_SOURCE_DIR}/lib/libORB_SLAM3.so)
 
-# EuRoC Stereo
-add_executable(euroc_stereo examples/euroc_stereo.cpp)
-target_link_libraries(euroc_stereo
-    gaussian_viewer    
-    gaussian_mapper
-    ${ORB_SLAM3_SOURCE_DIR}/lib/libORB_SLAM3.so)
+# # EuRoC Stereo
+# add_executable(euroc_stereo examples/euroc_stereo.cpp)
+# target_link_libraries(euroc_stereo
+#     gaussian_viewer    
+#     gaussian_mapper
+#     ${ORB_SLAM3_SOURCE_DIR}/lib/libORB_SLAM3.so)
 
 ##################################################################################
 ##  Build the mapping examples to ${PROJECT_SOURCE_DIR}/bin
 ##################################################################################
 
-# Intel Realsense
-if(realsense2_FOUND)
-    add_executable(realsense_rgbd examples/realsense_rgbd.cpp)
-    target_include_directories(realsense_rgbd PUBLIC
-        ${realsense_INCLUDE_DIR})
-    target_link_libraries(realsense_rgbd
-        gaussian_viewer    
-        gaussian_mapper
-        ${ORB_SLAM3_SOURCE_DIR}/lib/libORB_SLAM3.so
-        ${realsense2_LIBRARY})
-endif()
+# # Intel Realsense
+# if(realsense2_FOUND)
+#     add_executable(realsense_rgbd examples/realsense_rgbd.cpp)
+#     target_include_directories(realsense_rgbd PUBLIC
+#         ${realsense_INCLUDE_DIR})
+#     target_link_libraries(realsense_rgbd
+#         gaussian_viewer    
+#         gaussian_mapper
+#         ${ORB_SLAM3_SOURCE_DIR}/lib/libORB_SLAM3.so
+#         ${realsense2_LIBRARY})
+# endif()
