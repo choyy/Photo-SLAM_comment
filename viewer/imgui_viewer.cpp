@@ -17,6 +17,7 @@
  */
 
 #include "imgui_viewer.h"
+#include <GL/gl.h>
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -307,32 +308,24 @@ void ImGuiViewer::run()
         if (pSLAM_)
         {
             //--------------Draw SLAM frame image--------------
-            cv::Mat SLAM_img_to_show;
             cv::Mat SLAM_img_with_text = pSlamFrameDrawer_->DrawFrame(1.0f);
             if (SLAM_image_viewer_scale_ != 1.0f)
             {
                 int width = rendered_image_width_;
                 int height = static_cast<int>(SLAM_img_with_text.rows * SLAM_image_viewer_scale_);
                 cv::resize(SLAM_img_with_text, SLAM_img_with_text, cv::Size(width, height));
-                SLAM_img_to_show = cv::Mat(height, padded_sub_image_width_, CV_8UC3, cv::Vec3f(0, 0, 0));
             }
-            else
-            {
-                SLAM_img_to_show = cv::Mat(image_height_, padded_sub_image_width_, CV_8UC3, cv::Vec3f(0, 0, 0));
-            }
-            cv::Rect SLAM_image_rect(0, 0, SLAM_img_with_text.cols, SLAM_img_with_text.rows);
-            SLAM_img_with_text.copyTo(SLAM_img_to_show(SLAM_image_rect));
             // Upload SLAM frame
             glBindTexture(GL_TEXTURE_2D, SLAM_img_texture);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SLAM_img_to_show.cols, SLAM_img_to_show.rows,
-                        0, GL_BGR, GL_UNSIGNED_BYTE, (unsigned char*)SLAM_img_to_show.data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SLAM_img_with_text.cols, SLAM_img_with_text.rows,
+                        0, GL_RGB, GL_FLOAT, (float*)SLAM_img_with_text.data);
             // Create an ImGui window to show the SLAM frame
             ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
-            ImGui::SetNextWindowSize(ImVec2(rendered_image_width_ + 12, SLAM_img_to_show.rows + 40), ImGuiCond_Once);
+            ImGui::SetNextWindowSize(ImVec2(rendered_image_width_ + 12, SLAM_img_with_text.rows + 40), ImGuiCond_Once);
             {
                 ImGui::Begin("SLAM Frame");
                 ImGui::Image((void *)(intptr_t)SLAM_img_texture,
-                            ImVec2(SLAM_img_to_show.cols, SLAM_img_to_show.rows));
+                            ImVec2(SLAM_img_with_text.cols, SLAM_img_with_text.rows));
                 ImGui::End();
             }
 
@@ -347,7 +340,7 @@ void ImGuiViewer::run()
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, rendered_img_to_show.cols, rendered_img_to_show.rows,
                         0, GL_RGB, GL_FLOAT, (float*)rendered_img_to_show.data);
             // Create an ImGui window to show the rendered frame
-            ImGui::SetNextWindowPos(ImVec2(0, SLAM_img_to_show.rows + 40), ImGuiCond_Once);
+            ImGui::SetNextWindowPos(ImVec2(0, SLAM_img_with_text.rows + 40), ImGuiCond_Once);
             ImGui::SetNextWindowSize(ImVec2(rendered_image_width_ + 12, rendered_img_to_show.rows + 40), ImGuiCond_Once);
             {
                 ImGui::Begin("Current Rendered Frame");
