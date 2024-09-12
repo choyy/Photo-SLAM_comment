@@ -116,14 +116,14 @@ protected:
     glm::mat4 cam_trans_;
 
     float main_fx_, main_fy_, main_cx_, main_cy_;
-    float mouse_left_sensitivity_ = 0.05 * M_PI;
-    float mouse_right_sensitivity_ = 0.2 * M_PI;
-    float mouse_middle_sensitivity_ = 0.2;
-    float keyboard_velocity_ = 0.2;
-    float keyboard_anglular_velocity_ = 0.05;
+    float mouse_left_sensitivity_ = 1.;
+    float mouse_right_sensitivity_ = 1.;
+    float mouse_middle_sensitivity_ = 1.;
+    float keyboard_velocity_ = 1.;
+    float keyboard_anglular_velocity_ = 1.;
 
     bool reset_main_to_init_ = false;
-    bool tracking_vision_ = false;
+    bool tracking_vision_ = true;
     bool show_keyframes_ = false;
     bool show_sparse_mappoints_ = false;
     bool show_main_rendered_ = true;

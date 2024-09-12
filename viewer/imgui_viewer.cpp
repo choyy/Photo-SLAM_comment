@@ -30,9 +30,9 @@ ImGuiViewer::ImGuiViewer(
     : glfw_window_width_(1600),
       glfw_window_height_(900),
       panel_width_(372),
-      display_panel_height_(144),
+      display_panel_height_(160),
       training_panel_height_(440),
-      camera_panel_height_(144),
+      camera_panel_height_(146),
       SLAM_image_viewer_scale_(1.0f),
       training_(training)
 {
@@ -277,7 +277,7 @@ void ImGuiViewer::run()
             if (reset_main_to_init_ || !init_Twc_set_)
             {
                 cam_target_ = glm::vec3(OwInit[3][0], OwInit[3][1], OwInit[3][2]);
-                cam_pos_aligned = glmTwcInit * behind_;
+                cam_pos_aligned = glmTwcInit * glm::vec4(0.0f, 0.0f, -0.000001, 1.0f); // 此处0.000001如果过小或为0时会不现实点云
                 glmTwc_main_ = glmTwcInit;
                 Tcw_main_ = TcwInit;
                 Twc_main_ = Tcw_main_.inverse();
@@ -290,7 +290,7 @@ void ImGuiViewer::run()
                 handleUserInput();
                 glmTwc_main_ = trans4x4Eigen2glm(Tcw_main_.inverse().matrix());
                 cam_target_ = glm::vec3(glmTwc_main_[3][0], glmTwc_main_[3][1], glmTwc_main_[3][2]);
-                cam_pos_aligned = glmTwc_main_ * behind_;
+                cam_pos_aligned = glmTwc_main_ * glm::vec4(0.0f, 0.0f, -0.000001, 1.0f); // 此处0.000001如果过小或为0时会不现实点云
             }
             cam_pos_ = glm::vec3(cam_pos_aligned.x, cam_pos_aligned.y, cam_pos_aligned.z);
             cam_direction = cam_pos_ - cam_target_;
@@ -363,41 +363,27 @@ void ImGuiViewer::run()
         if (show_main_rendered_)
         {
             auto drawlist = ImGui::GetBackgroundDrawList();
+            Sophus::SE3f T_render;
             if (pSLAM_ && tracking_vision_)
             {
-                drawlist->AddImage((void *)(intptr_t)rendered_img_texture, ImVec2(0, 0),
-                                   ImVec2(glfw_window_width_, glfw_window_height_));
+                // 这里Tcw 表示Tw2c
+                Sophus::SE3f Tc2c(Eigen::Matrix3f::Identity(), Eigen::Vector3f(0.0f, 0.0f, camera_watch_dist_));
+                T_render = Tc2c * Tcw; // 渲染相机后方视角图像
             }
             else
             {
-                cv::Mat main_img = pGausMapper_->renderFromPose(
-                    Tcw_main_, rendered_image_width_main_, rendered_image_height_main_, true);
-                cv::Mat main_img_to_show = cv::Mat(rendered_image_height_main_, padded_main_image_width_, CV_32FC3, cv::Vec3f(0.0f, 0.0f, 0.0f));
-                main_img.copyTo(main_img_to_show(image_rect_main));
-                glBindTexture(GL_TEXTURE_2D, main_img_texture);
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, main_img_to_show.cols, main_img_to_show.rows,
-                     0, GL_RGB, GL_FLOAT, (float*)main_img_to_show.data);
-                drawlist->AddImage((void *)(intptr_t)main_img_texture, ImVec2(0, 0),
-                                   ImVec2(glfw_window_width_, glfw_window_height_));
+                T_render = Tcw_main_;
             }
+            cv::Mat main_img = pGausMapper_->renderFromPose(
+                T_render, rendered_image_width_main_, rendered_image_height_main_, true);
+            cv::Mat main_img_to_show = cv::Mat(rendered_image_height_main_, padded_main_image_width_, CV_32FC3, cv::Vec3f(0.0f, 0.0f, 0.0f));
+            main_img.copyTo(main_img_to_show(image_rect_main));
+            glBindTexture(GL_TEXTURE_2D, main_img_texture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, main_img_to_show.cols, main_img_to_show.rows,
+                0, GL_RGB, GL_FLOAT, (float*)main_img_to_show.data);
+            drawlist->AddImage((void*)(intptr_t)main_img_texture, ImVec2(0, 0),
+                ImVec2(glfw_window_width_, glfw_window_height_));
         }
-        //--------------Get current parameters--------------
-        VariableParameters params_in = pGausMapper_->getVaribleParameters();
-        position_lr_init_ = params_in.position_lr_init;
-        feature_lr_ = params_in.feature_lr;
-        opacity_lr_ = params_in.opacity_lr;
-        scaling_lr_ = params_in.scaling_lr;
-        rotation_lr_ = params_in.rotation_lr;
-        percent_dense_ = params_in.percent_dense;
-        lambda_dssim_ = params_in.lambda_dssim;
-        opacity_reset_interval_ = params_in.opacity_reset_interval;
-        densify_grad_th_ = params_in.densify_grad_th;
-        densify_interval_ = params_in.densify_interval;
-        new_kf_times_of_use_ = params_in.new_kf_times_of_use;
-        stable_num_iter_existence_ = params_in.stable_num_iter_existence;
-        keep_training_ = params_in.keep_training;
-        do_gaus_pyramid_training_ = params_in.do_gaus_pyramid_training;
-        do_inactive_geo_densify_ = params_in.do_inactive_geo_densify;
 
         //--------------Display mode panel--------------
         ImGui::SetNextWindowPos(ImVec2(glfw_window_width_ - panel_width_, 0), ImGuiCond_Once);
@@ -414,59 +400,12 @@ void ImGuiViewer::run()
             ImGui::Checkbox("Show main window rendered", &show_main_rendered_);
 
             ImGui::Text("Viewer average FPS %.1f", io.Framerate);
+            ImGui::Text("Iteration: %d", pGausMapper_->getIteration());
             ImGui::End();
         }
 
-        //--------------Training options panel--------------
-        if (training_)
-        {
-            ImGui::SetNextWindowPos(ImVec2(glfw_window_width_ - panel_width_, display_panel_height_ + 8), ImGuiCond_Once);
-            ImGui::SetNextWindowSize(ImVec2(panel_width_, training_panel_height_), ImGuiCond_Once);
-            {
-                ImGui::Begin("Training Options");
-
-                ImGui::Text("Iteration: %d", pGausMapper_->getIteration());
-
-                ImGui::Checkbox("Gaussian-pyramid-based training", &do_gaus_pyramid_training_);
-                ImGui::Checkbox("Densify with inactive geometries", &do_inactive_geo_densify_);
-                ImGui::Checkbox("Keep training after stop", &keep_training_);
-
-                ImGui::SliderFloat("Position l.r.", &position_lr_init_, 0.00001f, 0.00100f, "%.5f");
-                ImGui::SliderFloat("Feature l.r.", &feature_lr_, 0.0001f, 0.0050f, "%.5f");
-                ImGui::SliderFloat("Opacity l.r.", &opacity_lr_, 0.01f, 0.10f, "%.5f");
-                ImGui::SliderFloat("Scaling l.r.", &scaling_lr_, 0.001f, 0.010f, "%.5f");
-                ImGui::SliderFloat("Rotation l.r.", &rotation_lr_, 0.0001f, 0.0100f, "%.5f");
-                ImGui::SliderFloat("Percent dense", &percent_dense_, 0.001f, 0.100f, "%.3f");
-                ImGui::SliderFloat("Lambda dssim", &lambda_dssim_, 0.01f, 0.40f, "%.2f");
-                ImGui::SliderInt("Opacity reset", &opacity_reset_interval_, 0, 6000);
-                ImGui::SliderFloat("Densify grad th.", &densify_grad_th_, 0.0001f, 0.0020f, "%.5f");
-                ImGui::SliderInt("Densify int.", &densify_interval_, 1, 400);
-                ImGui::SliderInt("New kf. using", &new_kf_times_of_use_, 0, 10);
-                ImGui::SliderInt("Stable iter.", &stable_num_iter_existence_, 0, 100);
-
-                ImGui::End();
-            }
-        }
-        VariableParameters params_out;
-        params_out.position_lr_init = position_lr_init_;
-        params_out.feature_lr = feature_lr_;
-        params_out.opacity_lr = opacity_lr_;
-        params_out.scaling_lr = scaling_lr_;
-        params_out.rotation_lr = rotation_lr_;
-        params_out.percent_dense = percent_dense_;
-        params_out.lambda_dssim = lambda_dssim_;
-        params_out.opacity_reset_interval = opacity_reset_interval_;
-        params_out.densify_grad_th = densify_grad_th_;
-        params_out.densify_interval = densify_interval_;
-        params_out.new_kf_times_of_use = new_kf_times_of_use_;
-        params_out.stable_num_iter_existence = stable_num_iter_existence_;
-        params_out.keep_training = keep_training_;
-        params_out.do_gaus_pyramid_training = do_gaus_pyramid_training_;
-        params_out.do_inactive_geo_densify = do_inactive_geo_densify_;
-        pGausMapper_->setVaribleParameters(params_out);
-
         //--------------Camera view panel--------------
-        ImGui::SetNextWindowPos(ImVec2(glfw_window_width_ - panel_width_, (training_ ? display_panel_height_ + training_panel_height_ + 16 : display_panel_height_ + 8)), ImGuiCond_Once);
+        ImGui::SetNextWindowPos(ImVec2(glfw_window_width_ - panel_width_, display_panel_height_ + 8), ImGuiCond_Once);
         ImGui::SetNextWindowSize(ImVec2(panel_width_, camera_panel_height_), ImGuiCond_Once);
         {
             ImGui::Begin("Camera View Velocity");
@@ -635,7 +574,7 @@ void ImGuiViewer::mouseDrag()
     Eigen::Vector3f translating = Eigen::Vector3f::Zero();
     if (ImGui::GetIO().MouseDown[2])
     {
-        translating.x() += delta_rel_x;
+        translating.x() -= delta_rel_x;
         translating.y() -= delta_rel_y;
         // Velocity
         translating *= mouse_middle_sensitivity_;
