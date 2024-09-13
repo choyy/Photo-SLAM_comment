@@ -423,7 +423,7 @@ void ImGuiViewer::run()
         // Draw camera, KeyFrames and MapPoints
         if (pSLAM_ && show_keyframes_)
         {
-            pMapDrawer_->DrawCurrentCamera(tracking_vision_ ? glmTwc : glmTwc_main_);
+            pMapDrawer_->DrawCurrentCamera(glmTwc);
             pMapDrawer_->DrawKeyFrames(true, false, true, false);
         }
         if (pSLAM_ && show_sparse_mappoints_)
