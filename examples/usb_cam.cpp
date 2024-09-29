@@ -85,6 +85,7 @@ int main(int argc, char** argv)
         }
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
+        imshow("frame", frame);
         // Pass the image to the SLAM system
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB); // 3d高斯重建的颜色格式似乎有问题，必须把正常的图片格式转换一下
         pSLAM->TrackMonocular(frame, tframe, std::vector<ORB_SLAM3::IMU::Point>(), std::to_string(tframe));
@@ -95,7 +96,6 @@ int main(int argc, char** argv)
 
 
 
-        imshow("frame", frame);
         // auto t_current = std::chrono::steady_clock::now();
         // printf("fps: %.2f\n", 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(t_current - t_last).count());
         // t_last = t_current;
@@ -106,8 +106,8 @@ int main(int argc, char** argv)
             break;
         } else if (c == 's') { // s键保存图像
             static size_t count = 0;
-            cv::imwrite("results/img/" + std::to_string(count++) + ".png", frame);
-            printf("image saved\n");
+            cv::imwrite("results/img/" + std::to_string(++count) + ".png", frame);
+            printf("image %zu saved\n", count);
         }
     }
     // Stop all threads

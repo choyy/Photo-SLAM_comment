@@ -182,33 +182,33 @@ target_link_libraries(gaussian_viewer
 ##################################################################################
 
 # This is a C++ libtorch implementation of gaussian-splatting (https://github.com/graphdeco-inria/gaussian-splatting)
-add_executable(train_colmap examples/train_colmap.cpp)
-target_link_libraries(train_colmap
-    gaussian_viewer
-    gaussian_mapper)
+# add_executable(train_colmap examples/train_colmap.cpp)
+# target_link_libraries(train_colmap
+#     gaussian_viewer
+#     gaussian_mapper)
 
-add_executable(view_result examples/view_result.cpp)
-target_link_libraries(view_result
-    gaussian_viewer
-    gaussian_mapper)
+# add_executable(view_result examples/view_result.cpp)
+# target_link_libraries(view_result
+#     gaussian_viewer
+#     gaussian_mapper)
 
 ##################################################################################
 ##  Build the mapping examples to ${PROJECT_SOURCE_DIR}/bin
 ##################################################################################
 
-# Replica Monocular
-add_executable(replica_mono examples/replica_mono.cpp)
-target_link_libraries(replica_mono
-    gaussian_viewer    
-    gaussian_mapper
-    ${ORB_SLAM3_SOURCE_DIR}/lib/libORB_SLAM3.so)
+# # Replica Monocular
+# add_executable(replica_mono examples/replica_mono.cpp)
+# target_link_libraries(replica_mono
+#     gaussian_viewer    
+#     gaussian_mapper
+#     ${ORB_SLAM3_SOURCE_DIR}/lib/libORB_SLAM3.so)
 
-# Replica Monocular
-add_executable(replica_rgbd examples/replica_rgbd.cpp)
-target_link_libraries(replica_rgbd
-    gaussian_viewer    
-    gaussian_mapper
-    ${ORB_SLAM3_SOURCE_DIR}/lib/libORB_SLAM3.so)
+# # Replica Monocular
+# add_executable(replica_rgbd examples/replica_rgbd.cpp)
+# target_link_libraries(replica_rgbd
+#     gaussian_viewer    
+#     gaussian_mapper
+#     ${ORB_SLAM3_SOURCE_DIR}/lib/libORB_SLAM3.so)
 
 # TUM Monocular
 add_executable(tum_mono examples/tum_mono.cpp)
@@ -223,6 +223,12 @@ target_link_libraries(usb_cam
     gaussian_viewer    
     gaussian_mapper
     ${ORB_SLAM3_SOURCE_DIR}/lib/libORB_SLAM3.so)
+
+# USB Camera Grabber
+add_executable(usb_cam_grabber examples/usb_cam_grabber.cpp)
+target_link_libraries(usb_cam_grabber
+    ${OpenCV_LIBRARIES}
+    )
 
 # # TUM RGBD
 # # 以这个为例子，运行tum的rgbd数据，同时链接了下面几个库：

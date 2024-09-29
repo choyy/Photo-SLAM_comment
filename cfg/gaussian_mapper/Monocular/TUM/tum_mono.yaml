@@ -81,4 +81,4 @@ GaussianViewer.glfw_window_width: 1400
 GaussianViewer.glfw_window_height: 1050
 GaussianViewer.image_scale: 0.5
 GaussianViewer.image_scale_main: 1.0
-GaussianViewer.camera_watch_dist: 0.000001
+GaussianViewer.camera_watch_dist: 2
