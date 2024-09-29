@@ -857,13 +857,18 @@ void GaussianModel::densifyAndPrune(
     grads.index_put_({grads.isnan()}, 0.0f);
     this->densifyAndClone(grads, max_grad, extent);
     this->densifyAndSplit(grads, max_grad, extent);
+}
 
+void GaussianModel::pruneBigPoints(torch::Tensor& L, float min_opacity, float extent, int max_screen_size)
+{
     auto prune_mask = (this->getOpacityActivation() < min_opacity).squeeze();
     if (max_screen_size) {
         auto big_points_vs = this->max_radii2D_ > max_screen_size;
         auto big_points_ws = std::get<0>(this->getScalingActivation().max(/*dim=*/1)) > 0.1f * extent;
         prune_mask = torch::logical_or(torch::logical_or(prune_mask, big_points_vs), big_points_ws);
     }
+    auto big_points_ { L > 0.8 };
+    prune_mask = torch::logical_or(prune_mask, big_points_);
     this->prunePoints(prune_mask);
 
     c10::cuda::CUDACachingAllocator::emptyCache(); // torch.cuda.empty_cache()

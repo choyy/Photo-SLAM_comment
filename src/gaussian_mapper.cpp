@@ -774,6 +774,16 @@ void GaussianMapper::trainForOneIteration()
                     size_threshold
                 );
             }
+            if (getIteration() % densifyInterval()== 0) {
+                int size_threshold = (getIteration() > prune_big_point_after_iter_) ? 20 : 0;
+                // Tcw 表示Tw2c
+                Eigen::Vector3d t_ { -viewpoint_cam->Tcw_.rotationMatrix().inverse() * viewpoint_cam->t_ };
+                torch::Tensor t_cam = torch::tensor({t_[0], t_[1], t_[2]}, torch::TensorOptions().device(torch::kCUDA));
+
+                auto L = (gaussians_->xyz_ - t_cam).norm(2, 1) + 1; // 距离+1
+                L.reciprocal_();                                    // 计算倒数
+                gaussians_->pruneBigPoints(L, densify_min_opacity_, scene_->cameras_extent_, size_threshold);
+            }
 
             if (opacityResetInterval()
                 && (getIteration() % opacityResetInterval() == 0
