@@ -65,11 +65,11 @@ Optimization.rotation_lr: 0.001 #0.001
 # Densification
 Optimization.percent_dense: 0.01
 Optimization.lambda_dssim: 0.2
-Optimization.densification_interval: 100
+Optimization.densification_interval: 500
 Optimization.opacity_reset_interval: 0  # 0:never, 1:always, others:periodically
-Optimization.prune_big_point_after_iter: 30000
+Optimization.prune_big_point_after_iter: 30000 # 8000, 30000
 Optimization.densify_min_opacity: 0.1 #0.005
-Optimization.densify_from_iter: 800
+Optimization.densify_from_iter: 3000
 Optimization.densify_until_iter: 30000
 Optimization.densify_grad_threshold: 0.001
 

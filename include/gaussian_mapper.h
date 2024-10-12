@@ -42,6 +42,8 @@
 #include "ORB-SLAM3/include/System.h"
 #include "ORB-SLAM3/Thirdparty/Sophus/sophus/se3.hpp"
 
+#include <quadmap/depthmap.h>
+
 #include "operate_points.h"
 #include "stereo_vision.h"
 #include "tensor_utils.h"
@@ -165,6 +167,8 @@ public:
 
     void loadPly(std::filesystem::path ply_path, std::filesystem::path camera_path = "");
 
+    void setQuadtreeMap(std::shared_ptr<quadmap::Depthmap> pquadtree_map) { this->pQuadtreeMap_ = pquadtree_map; }
+
 protected:
     bool hasMetInitialMappingConditions();
     bool hasMetIncrementalMappingConditions();
@@ -228,6 +232,9 @@ public:
 
     // SLAM system
     std::shared_ptr<ORB_SLAM3::System> pSLAM_;
+
+    // open quadtree map
+    std::shared_ptr<quadmap::Depthmap> pQuadtreeMap_;
 
     // Settings
     torch::DeviceType device_type_;

@@ -35,6 +35,7 @@ find_package(glfw3 REQUIRED)
 # find_package(realsense2)
 
 set(ORB_SLAM3_SOURCE_DIR "${PROJECT_SOURCE_DIR}/ORB-SLAM3")
+set(OPEN_QUADTREE_MAPPING_SOURCE_DIR "${PROJECT_SOURCE_DIR}/open_quadtree_mapping")
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib/${CMAKE_BUILD_TYPE})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
@@ -49,6 +50,7 @@ include_directories(
     ${ORB_SLAM3_SOURCE_DIR}/include
     ${ORB_SLAM3_SOURCE_DIR}/include/CameraModels
     ${ORB_SLAM3_SOURCE_DIR}/Thirdparty/Sophus
+    ${OPEN_QUADTREE_MAPPING_SOURCE_DIR}/include
     ${EIGEN3_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR})
 
@@ -149,6 +151,7 @@ add_library(gaussian_mapper SHARED
     src/gaussian_mapper.cpp)
 target_link_libraries(gaussian_mapper
     ${ORB_SLAM3_SOURCE_DIR}/lib/libORB_SLAM3.so
+    ${OPEN_QUADTREE_MAPPING_SOURCE_DIR}/lib/libopen_quadtree_mapping.so
     ${OpenCV_LIBRARIES}
     jsoncpp_lib
     "${TORCH_LIBRARIES}"

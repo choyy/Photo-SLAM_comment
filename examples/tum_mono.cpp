@@ -96,11 +96,16 @@ int main(int argc, char **argv)
             argv[1], argv[2], ORB_SLAM3::System::MONOCULAR);
     float imageScale = pSLAM->GetImageScale();
 
+    // Create QuadtreeMap
+    quadmap::QParam params(argv[2]);
+    auto            pQuadtreeMap = std::make_shared<quadmap::Depthmap>(params);
+
     // Create GaussianMapper
     std::filesystem::path gaussian_cfg_path(argv[3]);
     std::shared_ptr<GaussianMapper> pGausMapper =
         std::make_shared<GaussianMapper>(
             pSLAM, gaussian_cfg_path, output_dir, 0, device_type);
+    pGausMapper->setQuadtreeMap(pQuadtreeMap);
     std::thread training_thd(&GaussianMapper::run, pGausMapper.get());
 
     // Create Gaussian Viewer
@@ -122,6 +127,7 @@ int main(int argc, char **argv)
 
     // Main loop
     cv::Mat im;
+    int quadtree_map_add_img_interval = 0;
     for (int ni = 0; ni < nImages; ni++)
     {
         if (pSLAM->isShutDown())
@@ -148,7 +154,15 @@ int main(int argc, char **argv)
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
         // Pass the image to the SLAM system
-        pSLAM->TrackMonocular(im, tframe, std::vector<ORB_SLAM3::IMU::Point>(), vstrImageFilenamesRGB[ni]);
+        Sophus::SE3f Tcw = pSLAM->TrackMonocular(im, tframe, std::vector<ORB_SLAM3::IMU::Point>(), vstrImageFilenamesRGB[ni]);
+        // Pass the image and pose to the quadtree map after ORB_SLAM3 initialization
+        if (pSLAM->GetTrackingState() == ORB_SLAM3::Tracking::OK
+            && (++quadtree_map_add_img_interval) % 10 == 0) { // 每10帧添加一帧到quadtree map
+            auto q = Tcw.unit_quaternion();
+            auto t = Tcw.translation();
+            quadmap::SE3<float> Tcw_quad(q.w(), q.x(), q.y(), q.z(), t.x(), t.y(), t.z());
+            pQuadtreeMap->add_frames(im, Tcw_quad);
+        }
 
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
 

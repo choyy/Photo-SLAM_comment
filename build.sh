@@ -34,6 +34,14 @@ cmake .. -DCMAKE_BUILD_TYPE=Release # add OpenCV_DIR definitions if needed, exam
 #cmake .. -DCMAKE_BUILD_TYPE=Release -DOpenCV_DIR=/home/rapidlab/libs/opencv/lib/cmake/opencv4
 make -j8
 
+# open_quadtree_mapping
+echo "Building open_quadtree_mapping ..."
+cd ../../open_quadtree_mapping
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release 
+make -j8
+
 # Photo-SLAM
 echo "Building Photo-SLAM ..."
 cd ../..

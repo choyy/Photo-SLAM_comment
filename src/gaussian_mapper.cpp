@@ -17,6 +17,7 @@
  */
 
 #include "include/gaussian_mapper.h"
+#include <mutex>
 
 //GaussianMapper的构造函数
 GaussianMapper::GaussianMapper(
@@ -432,7 +433,7 @@ void GaussianMapper::run()
                     new_kf->znear_ = z_near_;
 
                     //获取位姿 Pose
-                    auto pose = pKF->GetPose();//获取关键帧对应的pose
+                    auto pose = pKF->GetPose();//获取关键帧对应的pose，即Tcw
                     //设置位姿
                     new_kf->setPose(
                         pose.unit_quaternion().cast<double>(),
@@ -766,7 +767,7 @@ void GaussianMapper::trainForOneIteration()
 
             if ((getIteration() > opt_params_.densify_from_iter_) &&
                 (getIteration() % densifyInterval()== 0)) {
-                int size_threshold = (getIteration() > prune_big_point_after_iter_) ? 20 : 0;
+                int size_threshold = (getIteration() > prune_big_point_after_iter_) ? 200 : 0;
                 gaussians_->densifyAndPrune(//密集化与剪枝
                     densifyGradThreshold(),
                     densify_min_opacity_,//0.005,//
@@ -774,13 +775,14 @@ void GaussianMapper::trainForOneIteration()
                     size_threshold
                 );
             }
-            if (getIteration() % densifyInterval()== 0) {
-                int size_threshold = (getIteration() > prune_big_point_after_iter_) ? 20 : 0;
+            // if (getIteration() % densifyInterval() == 0) {
+            if (getIteration() % 100 == 0) {
+                int size_threshold = (getIteration() > prune_big_point_after_iter_) ? 200 : 0;
                 // Tcw 表示Tw2c
                 Eigen::Vector3d t_ { -viewpoint_cam->Tcw_.rotationMatrix().inverse() * viewpoint_cam->t_ };
                 torch::Tensor t_cam = torch::tensor({t_[0], t_[1], t_[2]}, torch::TensorOptions().device(torch::kCUDA));
 
-                auto L = (gaussians_->xyz_ - t_cam).norm(2, 1) + 1; // 距离+1
+                auto L = (gaussians_->xyz_ - t_cam).norm(2, 1) + 1; // 距离+1 // #todo:移除相机后方视角到相机的杂点
                 L.reciprocal_();                                    // 计算倒数
                 gaussians_->pruneBigPoints(L, densify_min_opacity_, scene_->cameras_extent_, size_threshold);
             }
@@ -907,7 +909,9 @@ void GaussianMapper::combineMappingOperations()
             }
 
             // Get new points
-            auto& associated_points = opr.associatedMapPoints();//理论上是把对应上的点取除掉，就是新的点
+            // auto& associated_points = opr.associatedMapPoints();//理论上是把对应上的点取除掉，就是新的点
+            std::lock_guard<std::mutex> lock(pQuadtreeMap_->getUpdateMutex());
+            auto& associated_points = pQuadtreeMap_->getUnusedPts(); // 使用pQuadtreeMap_生成的点云
             auto& points = std::get<0>(associated_points);
             auto& colors = std::get<1>(associated_points);
 
@@ -917,6 +921,7 @@ void GaussianMapper::combineMappingOperations()
                 std::unique_lock<std::mutex> lock_render(mutex_render_);
                 gaussians_->increasePcd(points, colors, getIteration());
             }
+            pQuadtreeMap_->clearUnusedPts(); // 清空使用过的点
         }
         break;
 
