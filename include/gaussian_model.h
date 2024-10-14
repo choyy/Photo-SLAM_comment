@@ -137,7 +137,7 @@ public:
         float min_opacity,
         float extent,
         int max_screen_size);
-    void pruneBigPoints(torch::Tensor& L, float min_opacity, float extent, int max_screen_size);
+    void pruneBigPoints(torch::Tensor& pts2removed, float min_opacity, float extent, int max_screen_size);
 
     void addDensificationStats(
         torch::Tensor& viewspace_point_tensor,

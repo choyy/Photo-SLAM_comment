@@ -239,6 +239,7 @@ public:
     std::uint32_t viewer_camera_id_ = 0;
     float rendered_image_viewer_scale_ = 1.0f;
     float rendered_image_viewer_scale_main_ = 1.0f;
+    float camera_watch_dist_ = 0.01F;
 
     float z_near_ = 0.01f;
     float z_far_ = 100.0f;
