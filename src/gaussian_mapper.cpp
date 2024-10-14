@@ -385,6 +385,8 @@ void GaussianMapper::readConfigFromFile(std::filesystem::path cfg_path)
         settings_file["GaussianViewer.image_scale"].operator float();
     rendered_image_viewer_scale_main_ =
         settings_file["GaussianViewer.image_scale_main"].operator float();
+    camera_watch_dist_ =
+        settings_file["GaussianViewer.camera_watch_dist"].operator float();
 }
 
 // tum_rgbd中开启的线程，运行3D高斯的过程
@@ -777,14 +779,29 @@ void GaussianMapper::trainForOneIteration()
             }
             // if (getIteration() % densifyInterval() == 0) {
             if (getIteration() % 100 == 0) {
-                int size_threshold = (getIteration() > prune_big_point_after_iter_) ? 200 : 0;
-                // Tcw 表示Tw2c
-                Eigen::Vector3d t_ { -viewpoint_cam->Tcw_.rotationMatrix().inverse() * viewpoint_cam->t_ };
-                torch::Tensor t_cam = torch::tensor({t_[0], t_[1], t_[2]}, torch::TensorOptions().device(torch::kCUDA));
+                auto            T           = viewpoint_cam->Tcw_; // Tcw 表示Tw2c
+                Eigen::Matrix3f Rcw_        = viewpoint_cam->Tcw_.rotationMatrix().cast<float>();
+                Eigen::Vector3d t_          = viewpoint_cam->t_;
+                torch::Tensor   Rcw         = torch::from_blob(Rcw_.data(), {3, 3}, torch::kFloat32).to(torch::kCUDA).t(); // !!要转置，tensor和eigen存储矩阵的方式不同
+                torch::Tensor   tcw         = torch::tensor({t_[0], t_[1], t_[2]}, torch::kCUDA).reshape({3, 1});
+                auto            f           = pSLAM_->getSettings()->camera1() /*fx fy cx cy*/->getParameter(0); // 相机焦距
+                auto            img_size    = pSLAM_->getSettings()->originalImSize();                           // 图像尺寸
+                auto            tan_squared = (img_size.width * img_size.width + img_size.height * img_size.height)
+                                   / (4 * f * f); // 图像最大视场半角正弦值的平方,即tan^2 = (w^2+h^2)/(4*f^2)
 
-                auto L = (gaussians_->xyz_ - t_cam).norm(2, 1) + 1; // 距离+1 // #todo:移除相机后方视角到相机的杂点
-                L.reciprocal_();                                    // 计算倒数
-                gaussians_->pruneBigPoints(L, densify_min_opacity_, scene_->cameras_extent_, size_threshold);
+                auto xyz_c = torch::matmul(Rcw, gaussians_->xyz_.t())
+                             + tcw.expand({3, gaussians_->xyz_.size(0)});          // 3d点在相机坐标系下的坐标
+                auto xyz_middle_cam = torch::logical_and(xyz_c.select(0, 2) < 0.1, // 选择位于相机后方且观察视角前方的点
+                                                         xyz_c.select(0, 2) > -camera_watch_dist_);
+                auto xyz_in_view    = (xyz_c.select(0, 0).pow(2) + xyz_c.select(0, 1).pow(2))
+                                       / (4 * (xyz_c.select(0, 2) + camera_watch_dist_).pow(2))
+                                   < tan_squared; // 选择位于相机视场内的点
+
+                auto pts2removed = torch::logical_and(xyz_middle_cam, xyz_in_view);
+                // auto L = (gaussians_->xyz_ - t_cam).norm(2, 1) + 1; // 距离+1
+                // L.reciprocal_();                                    // 计算倒数
+                int size_threshold = (getIteration() > prune_big_point_after_iter_) ? 200 : 0;
+                gaussians_->pruneBigPoints(pts2removed, densify_min_opacity_, scene_->cameras_extent_, size_threshold);
             }
 
             if (opacityResetInterval()
