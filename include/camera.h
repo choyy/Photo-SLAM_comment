@@ -85,8 +85,11 @@ public:
             undistort_map2
         );
 
-        cv::Mat white(old_size, CV_32FC3, cv::Vec3f(1.0f, 1.0f, 1.0f));
-        undistortImage(white, undistort_mask);
+        auto endos_mask = cv::imread("/home/bgt-ubuntu20/Downloads/datasets/TUM/endos_spine_dataset3/mask.png",
+                                     cv::IMREAD_COLOR);
+        endos_mask.convertTo(undistort_mask, CV_32F, 1.0 / 255.0);
+        // cv::Mat white(old_size, CV_32FC3, cv::Vec3f(1.0f, 1.0f, 1.0f));
+        // undistortImage(white, undistort_mask);
 
         if (do_gaus_pyramid_training) {
             assert(!gaus_pyramid_height_.empty() && !gaus_pyramid_width_.empty());

@@ -31,7 +31,7 @@ ImGuiViewer::ImGuiViewer(
     : glfw_window_width_(1600),
       glfw_window_height_(900),
       panel_width_(372),
-      display_panel_height_(160),
+      display_panel_height_(180),
       training_panel_height_(440),
       camera_panel_height_(146),
       SLAM_image_viewer_scale_(1.0f),
@@ -391,11 +391,13 @@ void ImGuiViewer::run()
                 ImGui::Checkbox("Show sparse MapPoints", &show_sparse_mappoints_);
             }
             ImGui::Checkbox("Show main window rendered", &show_main_rendered_);
+            ImGui::Checkbox("Keep training after stop", &keep_training_);
 
             ImGui::Text("Viewer average FPS %.1f", io.Framerate);
             ImGui::Text("Iteration: %d", pGausMapper_->getIteration());
             ImGui::End();
         }
+        pGausMapper_->setKeepTraining(keep_training_);
 
         //--------------Camera view panel--------------
         ImGui::SetNextWindowPos(ImVec2(glfw_window_width_ - panel_width_, display_panel_height_ + 8), ImGuiCond_Once);
