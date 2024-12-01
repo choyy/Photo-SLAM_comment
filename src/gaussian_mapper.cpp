@@ -1734,9 +1734,12 @@ void GaussianMapper::renderAndRecordAllKeyframes(
     std::size_t nkfs = scene_->keyframes().size();
     auto kfit = scene_->keyframes().begin();
     float dssim, psnr, psnr_gs;
+    float dssim_mean{0}, psnr_gs_mean{0};
     double render_time;
     for (std::size_t i = 0; i < nkfs; ++i) {
         renderAndRecordKeyframe((*kfit).second, dssim, psnr, psnr_gs, render_time, image_dir, image_gt_dir, image_loss_dir);
+        dssim_mean += dssim;
+        psnr_gs_mean += psnr_gs;
         out_time << (*kfit).first << " " << std::fixed << std::setprecision(8) << render_time << std::endl;
 
         out_dssim   << (*kfit).first << " " << std::fixed << std::setprecision(10) << dssim   << std::endl;
@@ -1745,6 +1748,12 @@ void GaussianMapper::renderAndRecordAllKeyframes(
 
         ++kfit;
     }
+    dssim_mean /= nkfs;
+    psnr_gs_mean /= nkfs;
+    out_dssim << "##[Gaussian Mapper]mean dssim: " << std::fixed << std::setprecision(10) << dssim_mean << std::endl;
+    out_psnr_gs << "##[Gaussian Mapper]mean psnr_gaussian_splatting: " << std::fixed << std::setprecision(10) << psnr_gs_mean << std::endl;
+    std::cout << "##[Gaussian Mapper]mean dssim: " << std::fixed << std::setprecision(10) << dssim_mean << std::endl;
+    std::cout << "##[Gaussian Mapper]mean psnr_gaussian_splatting: " << std::fixed << std::setprecision(10) << psnr_gs_mean << std::endl;
 }
 
 void GaussianMapper::savePly(std::filesystem::path result_dir)
