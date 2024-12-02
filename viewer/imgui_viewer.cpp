@@ -158,7 +158,7 @@ void ImGuiViewer::run()
     // Create window with graphics context
     GLFWwindow* window =
         glfwCreateWindow(glfw_window_width_, glfw_window_height_,
-                         "Photo-SLAM", nullptr, nullptr);
+                         "Endos3D", nullptr, nullptr);
     if (window == nullptr)
         throw std::runtime_error("[ImGuiViewer]Fails to create window!");
     glfwMakeContextCurrent(window);
@@ -280,14 +280,15 @@ void ImGuiViewer::run()
                 cam_target_ = glm::vec3(OwInit[3][0], OwInit[3][1], OwInit[3][2]);
                 cam_pos_aligned = glmTwcInit * glm::vec4(0.0f, 0.0f, -0.000001, 1.0f); // 此处0.000001如果过小或为0时会不现实点云
                 glmTwc_main_ = glmTwcInit;
-                Tcw_main_ = TcwInit;
+                // Tcw_main_ = Tcw;
+                Sophus::SE3f Tc2c(Eigen::Matrix3f::Identity(), Eigen::Vector3f(0.0f, 0.0f, camera_watch_dist_));
+                Tcw_main_ = Tc2c * Tcw; // 渲染相机后方视角图像
                 Twc_main_ = Tcw_main_.inverse();
                 init_Twc_set_ = true;
                 reset_main_to_init_ = false;
             }
             else
             {
-                Tcw_main_ = trans4x4glm2Sophus(glmTwc_main_).inverse();
                 handleUserInput();
                 glmTwc_main_ = trans4x4Eigen2glm(Tcw_main_.inverse().matrix());
                 cam_target_ = glm::vec3(glmTwc_main_[3][0], glmTwc_main_[3][1], glmTwc_main_[3][2]);
@@ -438,6 +439,7 @@ void ImGuiViewer::run()
         glfwSwapBuffers(window);
         glfwPollEvents();
 
+        if (pSLAM_->isShutDown()) { tracking_vision_ = false; }
         if (!keep_training_  && pGausMapper_->isStopped())
             signalStop();
     }
