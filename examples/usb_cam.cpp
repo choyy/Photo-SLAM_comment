@@ -85,7 +85,7 @@ int main(int argc, char** argv)
         }
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
-        imshow("frame", frame);
+        // imshow("frame", frame);
         // Pass the image to the SLAM system
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB); // 3d高斯重建的颜色格式似乎有问题，必须把正常的图片格式转换一下
         pSLAM->TrackMonocular(frame, tframe, std::vector<ORB_SLAM3::IMU::Point>(), std::to_string(tframe));

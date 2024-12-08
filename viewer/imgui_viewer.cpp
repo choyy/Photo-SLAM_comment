@@ -329,25 +329,25 @@ void ImGuiViewer::run()
                 ImGui::End();
             }
 
-            //--------------Draw current gaussian mapper frame image--------------
-            // Render gaussian mapper frame
-            cv::Mat rendered_img = pGausMapper_->renderFromPose(
-                Tcw, rendered_image_width_, rendered_image_height_, false);
-            cv::Mat rendered_img_to_show = cv::Mat(rendered_image_height_, padded_sub_image_width_, CV_32FC3, cv::Vec3f(0.0f, 0.0f, 0.0f));
-            rendered_img.copyTo(rendered_img_to_show(image_rect_sub));
-            // Upload rendered frame
-            glBindTexture(GL_TEXTURE_2D, rendered_img_texture);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, rendered_img_to_show.cols, rendered_img_to_show.rows,
-                        0, GL_RGB, GL_FLOAT, (float*)rendered_img_to_show.data);
-            // Create an ImGui window to show the rendered frame
-            ImGui::SetNextWindowPos(ImVec2(0, SLAM_img_with_text.rows + 40), ImGuiCond_Once);
-            ImGui::SetNextWindowSize(ImVec2(rendered_image_width_ + 12, rendered_img_to_show.rows + 40), ImGuiCond_Once);
-            {
-                ImGui::Begin("Current Rendered Frame");
-                ImGui::Image((void *)(intptr_t)rendered_img_texture,
-                            ImVec2(rendered_img_to_show.cols, rendered_img_to_show.rows));
-                ImGui::End();
-            }
+            // //--------------Draw current gaussian mapper frame image--------------
+            // // Render gaussian mapper frame
+            // cv::Mat rendered_img = pGausMapper_->renderFromPose(
+            //     Tcw, rendered_image_width_, rendered_image_height_, false);
+            // cv::Mat rendered_img_to_show = cv::Mat(rendered_image_height_, padded_sub_image_width_, CV_32FC3, cv::Vec3f(0.0f, 0.0f, 0.0f));
+            // rendered_img.copyTo(rendered_img_to_show(image_rect_sub));
+            // // Upload rendered frame
+            // glBindTexture(GL_TEXTURE_2D, rendered_img_texture);
+            // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, rendered_img_to_show.cols, rendered_img_to_show.rows,
+            //             0, GL_RGB, GL_FLOAT, (float*)rendered_img_to_show.data);
+            // // Create an ImGui window to show the rendered frame
+            // ImGui::SetNextWindowPos(ImVec2(0, SLAM_img_with_text.rows + 40), ImGuiCond_Once);
+            // ImGui::SetNextWindowSize(ImVec2(rendered_image_width_ + 12, rendered_img_to_show.rows + 40), ImGuiCond_Once);
+            // {
+            //     ImGui::Begin("Current Rendered Frame");
+            //     ImGui::Image((void *)(intptr_t)rendered_img_texture,
+            //                 ImVec2(rendered_img_to_show.cols, rendered_img_to_show.rows));
+            //     ImGui::End();
+            // }
         }
 
         //--------------Draw main window image--------------
@@ -378,39 +378,39 @@ void ImGuiViewer::run()
                 ImVec2(glfw_window_width_, glfw_window_height_));
         }
 
-        //--------------Display mode panel--------------
-        ImGui::SetNextWindowPos(ImVec2(glfw_window_width_ - panel_width_, 0), ImGuiCond_Once);
-        ImGui::SetNextWindowSize(ImVec2(panel_width_, display_panel_height_), ImGuiCond_Once);
-        {
-            ImGui::Begin("Display Mode");
+        // //--------------Display mode panel--------------
+        // ImGui::SetNextWindowPos(ImVec2(glfw_window_width_ - panel_width_, 0), ImGuiCond_Once);
+        // ImGui::SetNextWindowSize(ImVec2(panel_width_, display_panel_height_), ImGuiCond_Once);
+        // {
+        //     ImGui::Begin("Display Mode");
 
-            if (training_)
-            {
-                ImGui::Checkbox("Tracking vision", &tracking_vision_);
-                ImGui::Checkbox("Show KeyFrames", &show_keyframes_);
-                ImGui::Checkbox("Show sparse MapPoints", &show_sparse_mappoints_);
-            }
-            ImGui::Checkbox("Show main window rendered", &show_main_rendered_);
+        //     if (training_)
+        //     {
+        //         ImGui::Checkbox("Tracking vision", &tracking_vision_);
+        //         ImGui::Checkbox("Show KeyFrames", &show_keyframes_);
+        //         ImGui::Checkbox("Show sparse MapPoints", &show_sparse_mappoints_);
+        //     }
+        //     ImGui::Checkbox("Show main window rendered", &show_main_rendered_);
 
-            ImGui::Text("Viewer average FPS %.1f", io.Framerate);
-            ImGui::Text("Iteration: %d", pGausMapper_->getIteration());
-            ImGui::End();
-        }
+        //     ImGui::Text("Viewer average FPS %.1f", io.Framerate);
+        //     ImGui::Text("Iteration: %d", pGausMapper_->getIteration());
+        //     ImGui::End();
+        // }
 
-        //--------------Camera view panel--------------
-        ImGui::SetNextWindowPos(ImVec2(glfw_window_width_ - panel_width_, display_panel_height_ + 8), ImGuiCond_Once);
-        ImGui::SetNextWindowSize(ImVec2(panel_width_, camera_panel_height_), ImGuiCond_Once);
-        {
-            ImGui::Begin("Camera View Velocity");
+        // //--------------Camera view panel--------------
+        // ImGui::SetNextWindowPos(ImVec2(glfw_window_width_ - panel_width_, display_panel_height_ + 8), ImGuiCond_Once);
+        // ImGui::SetNextWindowSize(ImVec2(panel_width_, camera_panel_height_), ImGuiCond_Once);
+        // {
+        //     ImGui::Begin("Camera View Velocity");
 
-            ImGui::SliderFloat("Mouse Left", &mouse_left_sensitivity_, 0.01f, 1.0f, "%.2f");
-            ImGui::SliderFloat("Mouse Right", &mouse_right_sensitivity_, 0.01f, 1.0f, "%.2f");
-            ImGui::SliderFloat("Mouse Middle", &mouse_middle_sensitivity_, 0.01f, 1.0f, "%.2f");
-            ImGui::SliderFloat("Keyboard t", &keyboard_velocity_, 0.01f, 1.0f, "%.2f");
-            ImGui::SliderFloat("Keyboard R", &keyboard_anglular_velocity_, 0.01f, 1.0f, "%.2f");
+        //     ImGui::SliderFloat("Mouse Left", &mouse_left_sensitivity_, 0.01f, 1.0f, "%.2f");
+        //     ImGui::SliderFloat("Mouse Right", &mouse_right_sensitivity_, 0.01f, 1.0f, "%.2f");
+        //     ImGui::SliderFloat("Mouse Middle", &mouse_middle_sensitivity_, 0.01f, 1.0f, "%.2f");
+        //     ImGui::SliderFloat("Keyboard t", &keyboard_velocity_, 0.01f, 1.0f, "%.2f");
+        //     ImGui::SliderFloat("Keyboard R", &keyboard_anglular_velocity_, 0.01f, 1.0f, "%.2f");
 
-            ImGui::End();
-        }
+        //     ImGui::End();
+        // }
 
         //--------------ImGui Rendering--------------
         ImGui::Render();
