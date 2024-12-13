@@ -438,6 +438,12 @@ void ImGuiViewer::run()
 
         if (!keep_training_  && pGausMapper_->isStopped())
             signalStop();
+
+        //--------------
+        // Q: 停止
+        if (ImGui::IsKeyDown(ImGuiKey_Q)) {
+            pSLAM_->Shutdown();
+        }
     }
 
     // Cleanup

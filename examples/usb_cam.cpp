@@ -100,15 +100,6 @@ int main(int argc, char** argv)
         // printf("fps: %.2f\n", 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(t_current - t_last).count());
         // t_last = t_current;
 
-        auto c { char(cv::waitKey(1)) };
-        if (c == 'q') { // q键退出循环
-            printf("quit\n");
-            break;
-        } else if (c == 's') { // s键保存图像
-            static size_t count = 0;
-            cv::imwrite("results/img/" + std::to_string(++count) + ".png", frame);
-            printf("image %zu saved\n", count);
-        }
     }
     // Stop all threads
     pSLAM->Shutdown();
