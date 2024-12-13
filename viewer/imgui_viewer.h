@@ -141,7 +141,7 @@ protected:
     int new_kf_times_of_use_;
     int stable_num_iter_existence_; ///< loop closure correction
 
-    bool keep_training_ = false;
+    bool keep_training_ = true;
     bool do_gaus_pyramid_training_;
     bool do_inactive_geo_densify_;
 
